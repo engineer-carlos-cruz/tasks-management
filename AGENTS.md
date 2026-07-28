@@ -1,7 +1,5 @@
 # AGENTS.md — TaskFlow API
 
-Very early skeleton — only `TaskManagementApplication.java` and its context-loads test exist. No controllers, services, repositories, entities, or security.
-
 ## Commands
 
 ```sh
@@ -12,27 +10,44 @@ Very early skeleton — only `TaskManagementApplication.java` and its context-lo
 
 ## Key facts
 
-- **Java 26** (toolchain in `build.gradle`), **Spring Boot 4.1.0**, Gradle 9.5.1 wrapper
-- Package: `dev.ccruz.task_management` (underscore — hyphen is invalid in Java packages)
-- Dep names: `spring-boot-starter-webmvc` / `spring-boot-starter-webmvc-test` (note `webmvc`, not `web`)
+- **Java 26**, **Spring Boot 4.1.0**, Gradle 9.5.1 wrapper
+- Package: `dev.ccruz.task_management` (underscore — hyphen invalid in Java packages)
+- Dep names: `spring-boot-starter-webmvc` / `spring-boot-starter-webmvc-test` (not `web`)
 - `settings.gradle` root name: `task-management`
-- `src/main/resources/application.yaml` has only `spring.application.name` — no datasource, JPA, or security config yet
+- No Lombok, MapStruct, or `spring-boot-starter-validation` in `build.gradle` — write full getters/setters/constructors and manual mapping
+- Password stored **in plain text** — no BCrypt or Spring Security wired yet
+- `application.yaml` has only `spring.application.name` — no datasource/JPA/Flyway/JWT config yet
+- `contextLoads` test **fails** without a datasource — expected until PostgreSQL is configured
+
+## What exists vs what's planned
+
+| Layer | Status |
+|-------|--------|
+| `domain/` | 3 entities + 2 enums — done |
+| `repository/` | 3 repos with derived queries — done |
+| `exception/` | 3 classes — done |
+| `service/` | 4 services with business rules — done |
+| `controller/`, `dto/`, `mapper/`, `security/`, `config/` | Not yet implemented |
 
 ## Docs
 
 | File | Purpose |
 |------|---------|
-| `docs/PRD.md` | Product requirements — references many technologies **not yet in `build.gradle`** (JPA, PostgreSQL, Flyway, Docker, Lombok, MapStruct, OpenAPI, Testcontainers, etc.) and says "Maven". Always verify against `build.gradle`. |
-| `docs/SPEC.md` | Full technical SDD — API contract, data model, security, validation, error spec, package layout. Read this before implementing. |
+| `docs/SPEC.md` | Full SDD — API contract, data model, security, validation, error spec, package layout. Read before implementing. |
+| `docs/PRD.md` | Product requirements — references technologies **not in `build.gradle`** and says "Maven". Always verify against `build.gradle`. |
 
-## Architecture (planned)
+## Architecture
 
 ```
 controller -> service -> repository -> domain
 ```
 
-Additional packages: `dto`, `mapper`, `config`, `security`, `exception`, `validation`.
+Additional planned packages: `dto`, `mapper`, `config`, `security`, `exception`, `validation`.
 
-## Testing
+## Service authorization rules (current)
 
-Uses JUnit 5 platform. No Mockito or Testcontainers in `build.gradle` yet.
+- **Project**: CRUD only if authenticated user is the `owner`
+- **Task view**: accessible if user is owner, creator, or assignee
+- **Task edit**: only owner or creator
+- **Task delete**: only project owner
+- **AuthService.login**: plain-text password comparison (no BCrypt yet)

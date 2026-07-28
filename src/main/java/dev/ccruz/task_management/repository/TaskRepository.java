@@ -30,4 +30,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByAssigneeIdAndPriority(Long assigneeId, Priority priority);
 
     List<Task> findByAssigneeIdAndStatusAndPriority(Long assigneeId, TaskStatus status, Priority priority);
+
+    List<Task> findByStatusAndPriority(TaskStatus status, Priority priority);
 }

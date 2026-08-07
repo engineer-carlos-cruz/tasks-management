@@ -2,7 +2,9 @@ package dev.ccruz.task_management.service;
 
 import dev.ccruz.task_management.domain.User;
 import dev.ccruz.task_management.exception.DuplicateEmailException;
+import dev.ccruz.task_management.exception.UnauthorizedException;
 import dev.ccruz.task_management.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User register(String name, String lastName, String email, String password) {
@@ -21,13 +25,15 @@ public class AuthService {
             throw new DuplicateEmailException(email);
         }
 
-        User user = new User(name, lastName, email, password);
+        String encodedPassword = passwordEncoder.encode(password);
+        User user = new User(name, lastName, email, encodedPassword);
         return userRepository.save(user);
     }
 
     public User login(String email, String password) {
         return userRepository.findByEmail(email)
-                .filter(user -> user.getPassword().equals(password))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+                .filter(user -> user.isEnabled()
+                        && passwordEncoder.matches(password, user.getPassword()))
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
     }
 }

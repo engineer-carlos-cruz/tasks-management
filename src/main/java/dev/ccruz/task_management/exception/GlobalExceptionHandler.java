@@ -1,16 +1,33 @@
 package dev.ccruz.task_management.exception;
 
 import dev.ccruz.task_management.dto.response.ErrorResponse;
+import dev.ccruz.task_management.dto.response.ValidationErrorDetail;
+import dev.ccruz.task_management.dto.response.ValidationErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ValidationErrorResponse> handleValidation(MethodArgumentNotValidException ex,
+                                                                    HttpServletRequest request) {
+        List<ValidationErrorDetail> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> new ValidationErrorDetail(
+                        fieldError.getField(), fieldError.getDefaultMessage(), fieldError.getRejectedValue()))
+                .toList();
+        ValidationErrorResponse body = new ValidationErrorResponse(
+                "Validation Failed", "Errores de validación en los campos", HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now(), request.getRequestURI(), errors);
+        return ResponseEntity.badRequest().body(body);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex,

@@ -6,6 +6,7 @@ import dev.ccruz.task_management.dto.request.RegisterRequest;
 import dev.ccruz.task_management.dto.response.AuthResponse;
 import dev.ccruz.task_management.security.JwtTokenProvider;
 import dev.ccruz.task_management.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         User user = authService.register(
                 request.getName(), request.getLastName(), request.getEmail(), request.getPassword());
         String token = tokenProvider.generateToken(user);
@@ -35,7 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         User user = authService.login(request.getEmail(), request.getPassword());
         String token = tokenProvider.generateToken(user);
         AuthResponse response = new AuthResponse(token, user.getEmail(), user.getName());
